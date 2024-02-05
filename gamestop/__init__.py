@@ -24,7 +24,7 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     price = models.FloatField(initial=100.0)
     priceLastUpd = models.IntegerField(initial=0)
-    insidePrice = models.FloatField(initial=100.0)
+    #insidePrice = models.FloatField(initial=100.0)
     s = models.FloatField(initial=0)
     f = models.FloatField(initial=0)
     startTS = models.FloatField(initial=0)
@@ -48,6 +48,10 @@ class Player(BasePlayer):
     f = models.FloatField(initial=0)
     history = models.LongStringField(initial="")
     insides = models.LongStringField(initial="")
+    insidePrice = models.FloatField(initial=100.0)
+    discount_val = models.FloatField(initial=0.02)          
+    discount_ptr = models.IntegerField(initial=0) 
+    k = models.IntegerField(initial=1)
 
 
 
@@ -80,6 +84,10 @@ def price_change(t_now, t_before, p_before, t_change, price_zero=100, a=0.2, sig
             return price_zero + a * t_now + s * (t_now - t_change) -f * (t_now - t_change) + np.random.normal(mu, np.sqrt(sigma_squared)) 
     else:
         return p_before
+
+def find_step_for_coeff(N, pos=10):
+    """Шаг изменения коэффициента"""
+    return float(1/(pos * N))
 
 '''  
 
@@ -122,10 +130,10 @@ class Bid(Page):
             player.group.currentTS = time.time()
             player.group.gameTime = player.group.accTime + math.floor(player.group.currentTS - player.group.startTS)
             player.group.timeLeft = C.INITIAL_TIME - player.group.gameTime
-            if player.group.gameTime and player.group.gameTime % 10 == 0 and player.group.priceLastUpd + 1 < player.group.gameTime:
+            if player.group.gameTime and player.group.gameTime % 3 == 0 and player.group.priceLastUpd + 1 < player.group.gameTime:
                 new_price = price_change(
                     t_now = player.group.gameTime, 
-                    t_before = player.group.gameTime - 10, 
+                    t_before = player.group.gameTime - 3, 
                     p_before = player.group.price, 
                     t_change = 150, 
                     price_zero = 100, 
@@ -174,21 +182,27 @@ class Bid(Page):
         if data['type'] == 'buyInside':
             if player.group.gameTime >= 150:
                 return
-            qnt = min(data['quantity'], math.floor(player.cash / player.group.insidePrice))
+            qnt = min(data['quantity'], math.floor(player.cash / player.insidePrice))
             #qnt = data['quantity']
             if qnt:
-                player.cash -= player.group.insidePrice * qnt
+                player.cash -= player.insidePrice * qnt
                 player.numInsides += qnt
                 
                 player.s = player.group.s
                 player.f = player.group.f
                 
                 if player.isHedgeFund:
-                    player.s += qnt / max(player.group.numSmallTraders * 10, 1)
+                    player.s += find_step_for_coeff(player.group.numSmallTraders) * player.discount_val
                     player.group.s = player.s
                 else:
-                    player.f += qnt / max(player.group.numHedgeFunds * 10, 1)
+                    player.f += find_step_for_coeff(player.group.numHedgeFunds) * player.discount_val
                     player.group.f = player.f
+                
+                player.discount_ptr += 1
+                if player.discount_ptr % 3 == 0:
+                    player.discount_val /= 2
+                    player.insidePrice = 100.0 * player.k * np.log(2*player.k+2)
+                    player.k += 1
                 
                 coeff = 0.2 + player.s - player.f
                 player.insides = f"<tr><td>{player.group.gameTime}</td><td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}</td></tr>" + player.insides
@@ -206,7 +220,8 @@ class Bid(Page):
             "cash": round(p.cash, 2), 
             "numInsides": p.numInsides,
             "history": p.history,
-            "insides": p.insides
+            "insides": p.insides,
+            "insidePrice": round(p.insidePrice, 2)
         } for p in player.group.get_players()}
         print('>>', round(time.time(), 2), data_ret)
         return data_ret

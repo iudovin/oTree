@@ -43,7 +43,6 @@
 	  display: table;
 	  clear: both;
 	}
-	
 
 </style>
 		
@@ -68,11 +67,11 @@
 		<tr>
 			<td>Inside</td>
 			<td id="numInsides">{{ player.numInsides }}</td>
-			<td><input type="number" id="qnt2" style="-moz-appearance: auto;" value=1 min="1" max="1000" step="1" size="6"></td>
+			<td><input type="number" id="qnt2" style="-moz-appearance: auto;" value=1 min="1" max="1" step="1" size="6" disabled></td>
 			<td>
 				<button type="button" onclick="buyInside()">Купить</button>
 			</td>
-			<td>{{ player.group.insidePrice }}</td>
+			<td id="insidePrice">{{ player.insidePrice }}</td>
 		</tr>
 	</table>
 	
@@ -236,6 +235,9 @@
 		}
 		if ("insides" in data) {
 			document.getElementById("tabInsides").innerHTML = "<tr><td>Время</td><td>Сообщения</td></tr>" + data.insides;
+		}
+		if ("insidePrice" in data) {
+			document.getElementById("insidePrice").innerHTML = data.insidePrice;
 		}
 		if ("price" in data) {
 			document.getElementById("price").innerHTML = data.price;
