@@ -1,0 +1,19 @@
+{{ block title }}
+    Результаты раунда {{ player.group.round_number }}
+{{ endblock }}
+
+{{ block content }}
+
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
+
+	<p>Последняя цена акции: {{ player.group.price }}</p>
+	<p>Параметры: \( a=0.2 \), \( s={{ player.group.s }} \), \(f={{ player.group.f }} \)</p>
+	<p>Ваш выигрыш: <b>{{ player.payoff }}</b></p>
+
+    {{ next_button }}
+{{ endblock }}
+
+

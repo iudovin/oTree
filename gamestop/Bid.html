@@ -1,0 +1,294 @@
+{{ block title }}
+Раунд {{ player.group.round_number }}
+{{ endblock }}
+{{ block content }}
+
+
+<script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+
+<style>
+	
+	.table tbody tr:first-child {
+		font-weight: bold;
+	}
+		
+	.myTable {
+		border: 1px solid #ccc;
+		padding: .5rem;
+	}
+	.myTable tr, .myTable tr td {
+		border: 1px solid #ccc;
+		padding: .5rem;
+	}
+	
+	.column {
+	  float: left;
+	  width: 50%;
+	  padding: 10px;
+	}
+	
+	.scrollable {
+  	  overflow-y: scroll; 
+  	  height: 400px;
+	}
+
+	.row:after {
+	  content: "";
+	  display: table;
+	  clear: both;
+	}
+	
+
+</style>
+		
+	<table class="table" style="width: fit-content; float: left; margin-bottom: 30px">
+		<tr>
+			<td>Название</td>
+			<td>Позиция</td>
+			<td>Кол-во</td>
+			<td></td>
+			<td>Цена</td>
+		</tr>
+		<tr>
+			<td>GameStop</td>
+			<td id="pos">{{ player.pos }}</td>
+			<td><input type="number" id="qnt1" style="-moz-appearance: auto;" value=1 min="1" max="1000" step="1" size="6"></td>
+			<td>
+				<button type="button" onclick="buy()">Купить</button>
+				<button type="button" onclick="sell()">Продать</button>
+			</td>
+			<td id="price">{{ player.group.price }}</td>
+		</tr>
+		<tr>
+			<td>Inside</td>
+			<td id="numInsides">{{ player.numInsides }}</td>
+			<td><input type="number" id="qnt2" style="-moz-appearance: auto;" value=1 min="1" max="1000" step="1" size="6"></td>
+			<td>
+				<button type="button" onclick="buyInside()">Купить</button>
+			</td>
+			<td>{{ player.group.insidePrice }}</td>
+		</tr>
+	</table>
+	
+	
+	{{ if player.isAdmin }}
+	<table class="table" style="width: fit-content; float: left; margin: 0 30px; color: red; border: 1px solid red">
+		<!--div style="font-weight: bold; padding: .5rem; border: 1px solid #ccc; margin-bottom: 0">Интерфейс админа</div>
+		<div style="font-weight: bold; padding: .5rem; border: 1px solid #ccc; border-top: none; margin-top: 0"-->
+		<tr><td>Интерфейс админа</td></tr>	
+		<tr><td>
+			<button type="button" id="start_pause" onclick="f_start_pause()">Start</button>
+			<button type="button" id="next_stage" onclick="f_next_stage()">Next Period</button>
+		</td></tr>	
+	</table>
+	{{ endif }}
+	
+	<!--table style="width: fit-content; float: right; text-align: right">
+		<tr style="font-weight: bold"><td>Время</td></tr>
+		<tr><td>{{ player.group.gameTime }}</td></tr>
+	</table-->
+	
+	<table class="table" style="width: fit-content; float: right">
+		<tr><td>Деньги</td><td>Время</td></tr>
+		<tr><td id="cash">{{ player.cash }}</td><td id="time">{{ player.group.timeLeft }}</td></tr>
+	</table>
+
+	<canvas id="priceChart" style="width:100%; height: 200px; margin: 10px 0"></canvas>
+
+	
+	<div class="row">
+		<div class="column">
+			<h5>История сделок</h5>
+			<div class="scrollable">
+				<table class="table" id="tabHistory">
+					<tr><td>Время</td><td>Цена</td><td>Кол-во</td></tr>
+					<tr><td></td><td></td><td></td></tr>
+				</table>
+			</div>
+		</div>
+		<div class="column">
+			<h5>Инсайды</h5>
+			<div class="scrollable">
+				<table class="table" id="tabInsides">
+					<tr><td>Время</td><td>Сообщения</td></tr>
+					<tr><td></td><td></td></tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	
+	<br>
+	<br>
+	<br>
+	
+	<md-block>
+	
+	##### Напоминание инструкции
+	
+	###### Формула цены
+	
+	\[ p(t) = \text{price}(t) = at + N(\mu, \sigma^2) + \theta(t' − t) (st − ft), \]
+	
+	###### Возможные ситуации в игре
+	
+	* \( a+s-f > 0 \) &ndash; рынок будет расти
+	* \( a+s-f < 0 \) &ndash; рынок будет падать
+	* \( a+s-f = 0 \) &ndash; рынок не будет ни расти, ни падать
+	
+	
+	###### Возможные начальные позиции
+	
+	<table class="table">
+	<tr>
+	<th></th>
+	<th>Cash</th>
+	<th>GameStop</th>
+	<th>При покупке инсайда</th>
+	</tr>
+	<tr>
+	<td>Малый инвестор</td>
+	<td>1000</td>
+	<td>10 000</td>
+	<td>f увеличивается, s не меняется</td>
+	</tr>
+	<tr>
+	<td>Хедж–фонд</td>
+	<td>1000</td>
+	<td>-10 000</td>
+	<td>s увеличивается, f не меняется</td>
+	</tr>
+	</table>
+	
+	
+	</md-block>
+	
+		
+
+<script>
+
+	
+	var xValues = [0];
+	var yValues = [100];
+	var t = 10;
+		
+	priceChart = new Chart("priceChart", {
+		  type: "line",
+		  data: {
+		    labels: xValues,
+		    datasets: [{
+				fill: false,
+				lineTension: 0,
+				backgroundColor: "black",
+				borderColor: "black",
+				data: yValues,
+				pointRadius: 0,
+		    }]
+		  },
+		  options: {
+			  legend: {display: false},
+			  scales: {
+				  yAxes: [{
+					  display: true,
+					  position: 'right',
+					  //ticks: {beginAtZero: false,}
+				  }]
+			   }
+			  //scales: {yAxes: [{ticks: {min: 6, max:16}}],}
+		  }
+	});
+	
+	console.log('start, {{ player.id_in_group }}, 1');
+	
+	function buy() {
+		liveSend({"type": "buy", "quantity": parseInt(document.getElementById("qnt1").value)});
+	}
+	
+	function sell() {
+		liveSend({"type": "sell", "quantity": parseInt(document.getElementById("qnt1").value)});
+	}
+	
+	function buyInside() {
+		liveSend({"type": "buyInside", "quantity": parseInt(document.getElementById("qnt2").value)});
+	}
+	
+  	function liveRecv(data) {
+		console.log("<<", data);
+		if ("timeLeft" in data) {
+			document.getElementById("time").innerHTML = data.timeLeft;
+		}
+		if ("cash" in data) {
+			document.getElementById("cash").innerHTML = data.cash;
+		}
+		if ("pos" in data) {
+			document.getElementById("pos").innerHTML = data.pos;
+		}
+		if ("numInsides" in data) {
+			document.getElementById("numInsides").innerHTML = data.numInsides;
+		}
+		if ("history" in data) {
+			document.getElementById("tabHistory").innerHTML = "<tr><td>Время</td><td>Цена</td><td>Кол-во</td></tr>" + data.history;
+		}
+		if ("insides" in data) {
+			document.getElementById("tabInsides").innerHTML = "<tr><td>Время</td><td>Сообщения</td></tr>" + data.insides;
+		}
+		if ("price" in data) {
+			document.getElementById("price").innerHTML = data.price;
+			if ("time" in data) {
+				if (xValues[xValues.length - 1] < data.time) {
+					xValues.push(data.time);
+					yValues.push(data.price);
+					priceChart.update();
+				}
+			}
+		}
+		if ("finishGame" in data) { 
+			document.getElementById("form").submit();
+		}
+	}
+
+</script>
+
+
+{{ if player.isAdmin }}
+<script>
+		
+	let gamePaused = true;
+	
+	setInterval(function() {
+		if (!gamePaused) liveSend({'type': 'timer'});
+	}, 500);
+
+	function f_start_pause() {
+	    if (gamePaused) {
+	        liveSend({'type': 'control', 'command': 'start'});
+			gamePaused = false;
+			document.getElementById("start_pause").innerHTML = "Pause";
+	    } else {
+	        liveSend({'type': 'control', 'command': 'pause'});
+			gamePaused = true;
+			document.getElementById("start_pause").innerHTML = "Start";
+	    }
+	}
+
+	function f_next_stage() {
+	    liveSend({'type': 'control', 'command': 'start_next'});
+	}
+
+</script>
+{{ endif }}
+
+
+
+
+
+
+
+
+
+{{ endblock }}
