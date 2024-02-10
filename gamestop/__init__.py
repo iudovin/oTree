@@ -9,12 +9,17 @@ doc = """
 Your app description
 """
 
+# Find01 Обновление цены 
+
 
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
     PLAYERS_PER_GROUP = None
     NUM_ROUNDS = 3
     INITIAL_TIME = 300
+    PRICE_CHANGE_TIMEOUT = 3
+    INITIAL_POS = [(1000, 5000),(1000, -10000)]
+    POS_LIMITS = [-15000, 5000]
 
 
 class Subsession(BaseSubsession):
@@ -64,43 +69,33 @@ class WaitToStart(WaitPage):
         group.s = 0 #np.random.uniform(0, 1)
         group.f = 0 #np.random.uniform(0, 1)
         for player in players:
-            player.isAdmin = (player.participant.label == 'admin')
-            #player.isAdmin = player.id_in_group == 1
+            #player.isAdmin = (player.participant.label == 'admin')
+            player.isAdmin = player.id_in_group == 1
             player.isHedgeFund = bool(player.id_in_group % 2) ^ bool(group.round_number % 2)
-            player.cash, player.pos = [(1000, 10000),(1000, -10000)][int(player.isHedgeFund)]
+            player.cash, player.pos = C.INITIAL_POS[int(player.isHedgeFund)]
         group.numHedgeFunds = sum(1 if p.isHedgeFund and not p.isAdmin else 0 for p in players)
         group.numSmallTraders = sum(0 if p.isHedgeFund or p.isAdmin else 1 for p in players)
         
 
 
 
-#'''
 
+
+'''
 def price_change(t_now, t_before, p_before, t_change, price_zero=100, a=0.2, sigma_squared=150, mu=0, s=0, f=0):
     if t_now != t_before and t_now != 0: 
         if t_now < t_change:
             return price_zero + a * t_now + np.random.normal(mu, np.sqrt(sigma_squared))
         else:
-            return price_zero + a * t_now + s * (t_now - t_change) -f * (t_now - t_change) + np.random.normal(mu, np.sqrt(sigma_squared)) 
+            return price_zero + a * t_now + s * (t_now - t_change) - f * (t_now - t_change) + np.random.normal(mu, np.sqrt(sigma_squared)) 
     else:
         return p_before
+'''
 
 def find_step_for_coeff(N, pos=10):
     """Шаг изменения коэффициента"""
     return float(1/(pos * N))
 
-'''  
-
-def price_change(t, t0, p0, t1=150, p1=100, mu=0, sigma=np.sqrt(150), a=0.2, s=0, f=0):
-    if t != t0 and t != 0:
-        if t < t1:
-            return p1 + a*t + np.random.normal(mu, sigma)
-        else:
-            return p1 + a*t + (s - f) * (t - t1) + np.random.normal(mu, sigma)
-    else:
-        return p0
-
-'''
 
 def get_trend_msg(s, f, a=0.2):
     if a + s > f:
@@ -110,6 +105,8 @@ def get_trend_msg(s, f, a=0.2):
     return 'Рынок не будет ни расти, ни падать'
 
 
+
+# ToDo ограничить абсолютную позицию игрока: [-15000, 5000]
 
 class Bid(Page):
     #timeout_seconds = 60
@@ -130,20 +127,14 @@ class Bid(Page):
             player.group.currentTS = time.time()
             player.group.gameTime = player.group.accTime + math.floor(player.group.currentTS - player.group.startTS)
             player.group.timeLeft = C.INITIAL_TIME - player.group.gameTime
-            if player.group.gameTime and player.group.gameTime % 3 == 0 and player.group.priceLastUpd + 1 < player.group.gameTime:
-                new_price = price_change(
-                    t_now = player.group.gameTime, 
-                    t_before = player.group.gameTime - 3, 
-                    p_before = player.group.price, 
-                    t_change = 150, 
-                    price_zero = 100, 
-                    a = 0.2, 
-                    sigma_squared = 150, 
-                    mu = 0, 
-                    s = player.group.s, 
-                    f = player.group.f
-                )
+            if player.group.gameTime and player.group.gameTime % C.PRICE_CHANGE_TIMEOUT == 0 and player.group.priceLastUpd + 1 < player.group.gameTime:
+                
+                # Find01 Обновление цены
+                # p(t+1)=p(t)+p(t)*a+p(t)*z
+                # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
+                new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
                 player.group.price = new_price
+                
                 player.group.priceLastUpd = player.group.gameTime
                 player.group.priceHistory += f"{player.group.price:.2f} "
         
@@ -164,16 +155,26 @@ class Bid(Page):
             return
             
         if data['type'] == 'buy':
-            qnt = min(data['quantity'], math.floor(player.cash / player.group.price))
+        
+            # Find02 Проверять лимиты позиций у игрока
+            
+            #qnt = min(data['quantity'], math.floor(player.cash / player.group.price))
             #qnt = data['quantity']
+            qnt = min(data['quantity'], C.POS_LIMITS[1] - player.pos)
+            
             if qnt:
                 player.cash -= player.group.price * qnt
                 player.pos += qnt
                 player.history = f"<tr><td>{player.group.gameTime}</td><td>{player.group.price:.2f}</td><td>{qnt}</td></tr>\n" + player.history
         
         if data['type'] == 'sell':
+        
+            # Find02 Проверять лимиты позиций у игрока
+            
             #qnt = min(player.pos, data['quantity'])
-            qnt = data['quantity']
+            #qnt = data['quantity']
+            qnt = min(data['quantity'], player.pos - C.POS_LIMITS[0])
+            
             if qnt:
                 player.pos -= qnt
                 player.cash += player.group.price * qnt
@@ -205,7 +206,7 @@ class Bid(Page):
                     player.k += 1
                 
                 coeff = 0.2 + player.s - player.f
-                player.insides = f"<tr><td>{player.group.gameTime}</td><td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}</td></tr>" + player.insides
+                player.insides = f"<tr><td>{player.group.gameTime}</td><td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td></tr>" + player.insides
         
         if player.group.price <= 0:
             player.group.timeLeft = 0

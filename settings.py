@@ -1,11 +1,10 @@
 from os import environ
 
-
 SESSION_CONFIGS = [
     dict(
         name='gamestop',
         app_sequence=['survey_short', 'instruction', 'gamestop'],
-        num_demo_participants=2,
+        num_demo_participants=3,
     ),
 ]
 
@@ -29,24 +28,10 @@ LANGUAGE_CODE = 'en'
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
 
-ROOMS = [
-    dict(
-        name='econ101',
-        display_name='Econ 101 class',
-        participant_label_file='_rooms/econ101.txt',
-    ),
-    dict(name='live_demo', display_name='Room for live demo (no participant labels)'),
-]
-
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable
 ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
 
-DEMO_PAGE_INTRO_HTML = """
-Here are some oTree games.
-"""
+DEMO_PAGE_INTRO_HTML = """ """
 
-
-SECRET_KEY = '6623715056562'
-
-INSTALLED_APPS = ['otree']
+SECRET_KEY = '7860656651692'
