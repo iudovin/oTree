@@ -10,7 +10,8 @@ Your app description
 """
 
 # Find01 Обновление цены 
-
+# Find02 Проверять лимиты позиций у игрока
+# Find03 Сохранять шаг изменения коэффициентов
 
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
@@ -19,7 +20,8 @@ class C(BaseConstants):
     INITIAL_TIME = 300
     PRICE_CHANGE_TIMEOUT = 3
     INITIAL_POS = [(1000, 5000),(1000, -10000)]
-    POS_LIMITS = [-15000, 5000]
+    POS_LIMITS = [-15000, 7000]
+    DISCOUNT_COEFF = 2
 
 
 class Subsession(BaseSubsession):
@@ -54,9 +56,11 @@ class Player(BasePlayer):
     history = models.LongStringField(initial="")
     insides = models.LongStringField(initial="")
     insidePrice = models.FloatField(initial=100.0)
-    discount_val = models.FloatField(initial=0.02)          
+    discount_val = models.FloatField(initial=1.0)          
     discount_ptr = models.IntegerField(initial=0) 
     k = models.IntegerField(initial=1)
+    f_step = models.FloatField(initial=0)
+    s_step = models.FloatField(initial=0)
 
 
 
@@ -132,9 +136,8 @@ class Bid(Page):
                 # Find01 Обновление цены
                 # p(t+1)=p(t)+p(t)*a+p(t)*z
                 # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
-                new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
-                player.group.price = new_price
-                
+                #new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
+                player.group.price *= (1.02 + np.random.normal(0, 0.3))
                 player.group.priceLastUpd = player.group.gameTime
                 player.group.priceHistory += f"{player.group.price:.2f} "
         
@@ -192,21 +195,27 @@ class Bid(Page):
                 player.s = player.group.s
                 player.f = player.group.f
                 
+                # Find03 Сохранять шаг изменения коэффициентов
                 if player.isHedgeFund:
-                    player.s += find_step_for_coeff(player.group.numSmallTraders) * player.discount_val
+                    player.s_step = find_step_for_coeff(player.group.numSmallTraders) * player.discount_val
+                    player.s += player.s_step
                     player.group.s = player.s
                 else:
-                    player.f += find_step_for_coeff(player.group.numHedgeFunds) * player.discount_val
+                    player.f_step = find_step_for_coeff(player.group.numHedgeFunds) * player.discount_val
+                    player.f += player.f_step
                     player.group.f = player.f
                 
                 player.discount_ptr += 1
                 if player.discount_ptr % 3 == 0:
-                    player.discount_val /= 2
+                    player.discount_val /= C.DISCOUNT_COEFF
                     player.insidePrice = 100.0 * player.k * np.log(2*player.k+2)
                     player.k += 1
                 
                 coeff = 0.2 + player.s - player.f
-                player.insides = f"<tr><td>{player.group.gameTime}</td><td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td></tr>" + player.insides
+                player.insides = f"""<tr>
+                    <td>{player.group.gameTime}</td>
+                    <td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
+                </tr>""" + player.insides
         
         if player.group.price <= 0:
             player.group.timeLeft = 0
