@@ -15,13 +15,20 @@ Your app description
 
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
-    PLAYERS_PER_GROUP = None
-    NUM_ROUNDS = 3
-    INITIAL_TIME = 300
-    PRICE_CHANGE_TIMEOUT = 3
-    INITIAL_POS = [(1000, 5000),(1000, -10000)]
-    POS_LIMITS = [-15000, 7000]
-    DISCOUNT_COEFF = 2
+    PLAYERS_PER_GROUP = None                    
+    NUM_ROUNDS = 3                              
+    INITIAL_TIME = 120                          # общее время игры
+    TIME_GAME_CHANGES = 60                      # время изменения игры (поведения цены)
+    PRICE_CHANGE_TIMEOUT = 3                    # частота изменения цены
+    INITIAL_POS = [(1000, 5000),(1000, -10000)] # начальные позиции игроков
+    POS_LIMITS = [-15000, 7000]                 # лимиты по акциям
+    DISCOUNT_COEFF = 2                          # насколько дисконтируется шаг
+    PRICE_ALPHA = 1.02                          # рост цены до изменения игры
+    PRICE_MU = 0                                # средняя флуктуация цены
+    PRICE_SIGMA = 0.03                          # дисперсия флуктуации цены
+    INSIDE_INITIAL_PRICE = 100.0                # начальная цена инсайда
+    A_PARAM = 0.2                               # параметр a для цены после изменения игры
+    INSIDES_BOUGHT_FOR_DISCOUNT = 3             # после покупки скольких инсайдов их цена меняется
 
 
 class Subsession(BaseSubsession):
@@ -29,38 +36,40 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
-    price = models.FloatField(initial=100.0)
-    priceLastUpd = models.IntegerField(initial=0)
-    #insidePrice = models.FloatField(initial=100.0)
+    # ПАРАМЕТРЫ ГРУППЫ
+    price = models.FloatField(initial=100.0)                
+    priceLastUpd = models.IntegerField(initial=0)           
     s = models.FloatField(initial=0)
     f = models.FloatField(initial=0)
-    startTS = models.FloatField(initial=0)
-    currentTS = models.FloatField(initial=0)
-    gameTime = models.IntegerField(initial=0)
-    accTime = models.IntegerField(initial=0)
-    numHedgeFunds = models.IntegerField(initial=0)
-    numSmallTraders = models.IntegerField(initial=0)
-    gamePaused = models.BooleanField(initial=True)
-    timeLeft = models.IntegerField(initial=C.INITIAL_TIME)
-    priceHistory = models.LongStringField(initial="")
+    startTS = models.FloatField(initial=0)                  # точное время начала игры
+    currentTS = models.FloatField(initial=0)                # текущее точное время
+    gameTime = models.IntegerField(initial=0)               # сколько идет игра (без учета пауз)
+    accTime = models.IntegerField(initial=0)                # сколько идет игра (с учетом пауз)
+    numHedgeFunds = models.IntegerField(initial=0)          # число игроков-фондов
+    numSmallTraders = models.IntegerField(initial=0)        # число игроков-инвесторов
+    gamePaused = models.BooleanField(initial=True)          # остановлена ли игра
+    timeLeft = models.IntegerField(initial=C.INITIAL_TIME)  # сколько осталось времени
+    priceHistory = models.LongStringField(initial="")       # история цен (для анализа)
+    price_change = models.FloatField(initial=0.0)           # шаг роста/падения цены после изменения игры
     
 
 class Player(BasePlayer):
-    cash = models.FloatField(initial=0)
-    pos = models.IntegerField(initial=0)
-    numInsides = models.IntegerField(initial=0)
-    isAdmin = models.BooleanField(initial=False)
-    isHedgeFund = models.BooleanField()
-    s = models.FloatField(initial=0)
-    f = models.FloatField(initial=0)
-    history = models.LongStringField(initial="")
-    insides = models.LongStringField(initial="")
-    insidePrice = models.FloatField(initial=100.0)
-    discount_val = models.FloatField(initial=1.0)          
-    discount_ptr = models.IntegerField(initial=0) 
-    k = models.IntegerField(initial=1)
-    f_step = models.FloatField(initial=0)
-    s_step = models.FloatField(initial=0)
+    # ПАРАМЕТРЫ ИГРОКА
+    cash = models.FloatField(initial=0)                             # сколько денег
+    pos = models.IntegerField(initial=0)                            # сколько акций
+    numInsides = models.IntegerField(initial=0)                     # сколько инсайдов
+    isAdmin = models.BooleanField(initial=False)                    # является ли админом
+    isHedgeFund = models.BooleanField()                             # является ли хедж-фондом 
+    s = models.FloatField(initial=0)                                # параметр s
+    f = models.FloatField(initial=0)                                # параметр f
+    history = models.LongStringField(initial="")                    # история сделок (для отображения)
+    insides = models.LongStringField(initial="")                    # история инсайдов (для отображения)
+    insidePrice = models.FloatField(initial=C.INSIDE_INITIAL_PRICE) # цена инсайда
+    discount_val = models.FloatField(initial=1.0)                   # параметр для шага изменения коэффициентов
+    discount_ptr = models.IntegerField(initial=0)                   # параметр для шага изменения коэффициентов
+    k = models.IntegerField(initial=1)                              # 1 + numInsides // 3
+    f_step = models.FloatField(initial=0)                           # шаг изменения параметра f при покупке инсайда
+    s_step = models.FloatField(initial=0)                           # шаг изменения параметра s при покупке инсайда
 
 
 
@@ -69,9 +78,9 @@ class WaitToStart(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        group.price = 100
-        group.s = 0 #np.random.uniform(0, 1)
-        group.f = 0 #np.random.uniform(0, 1)
+        #group.price = 100
+        #group.s = 0 #np.random.uniform(0, 1)
+        #group.f = 0 #np.random.uniform(0, 1)
         for player in players:
             #player.isAdmin = (player.participant.label == 'admin')
             player.isAdmin = player.id_in_group == 1
@@ -137,7 +146,14 @@ class Bid(Page):
                 # p(t+1)=p(t)+p(t)*a+p(t)*z
                 # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
                 #new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
-                player.group.price *= (1.02 + np.random.normal(0, 0.3))
+                if player.group.gameTime < C.TIME_GAME_CHANGES:
+                    player.group.price *= (C.PRICE_ALPHA + np.random.normal(C.PRICE_MU, C.PRICE_SIGMA))
+                    player.group.price_change = (C.A_PARAM + player.group.s - player.group.f) * player.group.price
+                else:
+                    #player.group.price_change = player.group.price_change or (C.A_PARAM + player.group.s - player.group.f) * player.group.price
+                    player.group.price += np.random.normal(C.PRICE_MU, C.PRICE_SIGMA) * player.group.price + player.group.price_change
+                
+                
                 player.group.priceLastUpd = player.group.gameTime
                 player.group.priceHistory += f"{player.group.price:.2f} "
         
@@ -184,7 +200,7 @@ class Bid(Page):
                 player.history = f"<tr><td>{player.group.gameTime}</td><td>{player.group.price:.2f}</td><td>{-qnt}</td></tr>\n" + player.history
         
         if data['type'] == 'buyInside':
-            if player.group.gameTime >= 150:
+            if player.group.gameTime >= C.TIME_GAME_CHANGES:
                 return
             qnt = min(data['quantity'], math.floor(player.cash / player.insidePrice))
             #qnt = data['quantity']
@@ -206,12 +222,12 @@ class Bid(Page):
                     player.group.f = player.f
                 
                 player.discount_ptr += 1
-                if player.discount_ptr % 3 == 0:
+                if player.discount_ptr % C.INSIDES_BOUGHT_FOR_DISCOUNT == 0:
                     player.discount_val /= C.DISCOUNT_COEFF
-                    player.insidePrice = 100.0 * player.k * np.log(2*player.k+2)
+                    player.insidePrice = C.INSIDE_INITIAL_PRICE * player.k * np.log(2*player.k+2)
                     player.k += 1
                 
-                coeff = 0.2 + player.s - player.f
+                coeff = C.A_PARAM + player.s - player.f
                 player.insides = f"""<tr>
                     <td>{player.group.gameTime}</td>
                     <td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
