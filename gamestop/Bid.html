@@ -69,7 +69,8 @@
 			<td id="numInsides">{{ player.numInsides }}</td>
 			<td><input type="number" id="qnt2" style="-moz-appearance: auto;" value=1 min="1" max="1" step="1" size="6" disabled></td>
 			<td>
-				<button type="button" onclick="buyInside()">Купить</button>
+				<button type="button" onclick="buyInside()" id="buyInsideButton">Купить</button>
+				<b id="insideTimer" style="color: red"></b>
 			</td>
 			<td id="insidePrice">{{ player.insidePrice }}</td>
 		</tr>
@@ -248,6 +249,14 @@
 					priceChart.update();
 				}
 			}
+		}
+		if ("gameChanged" in data) {
+			if (data.gameChanged) {
+				document.getElementById("buyInsideButton").disabled = true;
+			}
+		}
+		if ("timeToBuyInside" in data) {
+			document.getElementById("insideTimer").innerHTML = data.timeToBuyInside;
 		}
 		if ("finishGame" in data) { 
 			document.getElementById("form").submit();

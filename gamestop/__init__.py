@@ -9,16 +9,20 @@ doc = """
 Your app description
 """
 
+# CHANGE LOG
 # Find01 Обновление цены 
 # Find02 Проверять лимиты позиций у игрока
 # Find03 Сохранять шаг изменения коэффициентов
+# Find04 Исключить отрицательную позицию по деньгам
+# Find05 Отключить кнопку покупки инсайда после изменения игры
+# Find06 Добавить таймер для покупки инсайда
 
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
     PLAYERS_PER_GROUP = None                    
     NUM_ROUNDS = 3                              
-    INITIAL_TIME = 120                          # общее время игры
-    TIME_GAME_CHANGES = 60                      # время изменения игры (поведения цены)
+    INITIAL_TIME = 60                           # общее время игры
+    TIME_GAME_CHANGES = 30                      # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                    # частота изменения цены
     INITIAL_POS = [(1000, 5000),(1000, -10000)] # начальные позиции игроков
     POS_LIMITS = [-15000, 7000]                 # лимиты по акциям
@@ -78,32 +82,14 @@ class WaitToStart(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
-        #group.price = 100
-        #group.s = 0 #np.random.uniform(0, 1)
-        #group.f = 0 #np.random.uniform(0, 1)
         for player in players:
-            #player.isAdmin = (player.participant.label == 'admin')
             player.isAdmin = player.id_in_group == 1
             player.isHedgeFund = bool(player.id_in_group % 2) ^ bool(group.round_number % 2)
             player.cash, player.pos = C.INITIAL_POS[int(player.isHedgeFund)]
         group.numHedgeFunds = sum(1 if p.isHedgeFund and not p.isAdmin else 0 for p in players)
         group.numSmallTraders = sum(0 if p.isHedgeFund or p.isAdmin else 1 for p in players)
-        
 
 
-
-
-
-'''
-def price_change(t_now, t_before, p_before, t_change, price_zero=100, a=0.2, sigma_squared=150, mu=0, s=0, f=0):
-    if t_now != t_before and t_now != 0: 
-        if t_now < t_change:
-            return price_zero + a * t_now + np.random.normal(mu, np.sqrt(sigma_squared))
-        else:
-            return price_zero + a * t_now + s * (t_now - t_change) - f * (t_now - t_change) + np.random.normal(mu, np.sqrt(sigma_squared)) 
-    else:
-        return p_before
-'''
 
 def find_step_for_coeff(N, pos=10):
     """Шаг изменения коэффициента"""
@@ -119,11 +105,7 @@ def get_trend_msg(s, f, a=0.2):
 
 
 
-# ToDo ограничить абсолютную позицию игрока: [-15000, 5000]
-
-class Bid(Page):
-    #timeout_seconds = 60
-    
+class Bid(Page):    
     print('START GAME')
     
     @staticmethod
@@ -176,9 +158,8 @@ class Bid(Page):
         if data['type'] == 'buy':
         
             # Find02 Проверять лимиты позиций у игрока
+            # Find04 Исключить отрицательную позицию по деньгам
             
-            #qnt = min(data['quantity'], math.floor(player.cash / player.group.price))
-            #qnt = data['quantity']
             qnt = min(data['quantity'], C.POS_LIMITS[1] - player.pos, math.floor(player.cash / player.group.price))
             
             if qnt:
@@ -190,8 +171,6 @@ class Bid(Page):
         
             # Find02 Проверять лимиты позиций у игрока
             
-            #qnt = min(player.pos, data['quantity'])
-            #qnt = data['quantity']
             qnt = min(data['quantity'], player.pos - C.POS_LIMITS[0])
             
             if qnt:
@@ -203,7 +182,7 @@ class Bid(Page):
             if player.group.gameTime >= C.TIME_GAME_CHANGES:
                 return
             qnt = min(data['quantity'], math.floor(player.cash / player.insidePrice))
-            #qnt = data['quantity']
+
             if qnt:
                 player.cash -= player.insidePrice * qnt
                 player.numInsides += qnt
@@ -247,7 +226,11 @@ class Bid(Page):
             "numInsides": p.numInsides,
             "history": p.history,
             "insides": p.insides,
-            "insidePrice": round(p.insidePrice, 2)
+            "insidePrice": round(p.insidePrice, 2),
+            # Find05 Отключить кнопку покупки инсайда после изменения игры
+            "gameChanged": p.group.timeLeft < C.INITIAL_TIME - C.TIME_GAME_CHANGES,
+            # Find06 Добавить таймер для покупки инсайда
+            "timeToBuyInside": p.group.timeLeft - C.INITIAL_TIME + C.TIME_GAME_CHANGES + 1 if p.group.timeLeft >= C.INITIAL_TIME - C.TIME_GAME_CHANGES and p.group.timeLeft < C.INITIAL_TIME - C.TIME_GAME_CHANGES + 10 else ""
         } for p in player.group.get_players()}
         print('>>', round(time.time(), 2), data_ret)
         return data_ret
