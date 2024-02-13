@@ -179,7 +179,7 @@ class Bid(Page):
             
             #qnt = min(data['quantity'], math.floor(player.cash / player.group.price))
             #qnt = data['quantity']
-            qnt = min(data['quantity'], C.POS_LIMITS[1] - player.pos)
+            qnt = min(data['quantity'], C.POS_LIMITS[1] - player.pos, math.floor(player.cash / player.group.price))
             
             if qnt:
                 player.cash -= player.group.price * qnt
