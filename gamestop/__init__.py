@@ -22,17 +22,16 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None                    
     NUM_ROUNDS = 6
     ROUNDS_PARAMS_CHANGE = 3
-    INITIAL_TIME = 30                               # общее время игры
-    TIME_GAME_CHANGES = 20                          # время изменения игры (поведения цены)
+    INITIAL_TIME = 60                               # общее время игры
+    TIME_GAME_CHANGES = 40                          # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
     INITIAL_POS = [(1000, 5000),(1000, -10000)]     # начальные позиции игроков
     POS_LIMITS = [[-15000, 7000], [-15000, 5000]]   # лимиты по акциям
     DISCOUNT_COEFF = 2                              # насколько дисконтируется шаг
-    PRICE_ALPHA = 1.02                              # рост цены до изменения игры
     PRICE_MU = 0                                    # средняя флуктуация цены
-    PRICE_SIGMA = 0.03                              # дисперсия флуктуации цены
+    PRICE_SIGMA = 0.15                              # дисперсия флуктуации цены
     INSIDE_INITIAL_PRICE = 100.0                    # начальная цена инсайда
-    A_PARAM = 0.2                                   # параметр a для цены после изменения игры
+    A_PARAM = 0.02                                  # тренд для цены акции
     INSIDES_BOUGHT_FOR_DISCOUNT = 3                 # после покупки скольких инсайдов их цена меняется
 
 
@@ -97,7 +96,7 @@ def find_step_for_coeff(N, pos=10):
     return float(1/(pos * N))
 
 
-def get_trend_msg(s, f, a=0.2):
+def get_trend_msg(s, f, a=C.A_PARAM):
     if a + s > f:
         return 'Рынок будет расти'
     elif a + s < f:
@@ -141,11 +140,11 @@ class Bid(Page):
             if player.group.gameTime and player.group.gameTime % C.PRICE_CHANGE_TIMEOUT == 0 and player.group.priceLastUpd + 1 < player.group.gameTime:
                 
                 # Find01 Обновление цены
-                # p(t+1)=p(t)+p(t)*a+p(t)*z
+                # p(t+1)=p(t)+p(t)*a+p(t)*z = p(t)(1 + a + N(...))
                 # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
                 #new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
                 if player.group.gameTime <= C.TIME_GAME_CHANGES:
-                    player.group.price *= (C.PRICE_ALPHA + np.random.normal(C.PRICE_MU, C.PRICE_SIGMA))
+                    player.group.price *= (1 + C.A_PARAM + np.random.normal(C.PRICE_MU, C.PRICE_SIGMA))
                     player.group.price_change = (C.A_PARAM + player.group.s - player.group.f) * player.group.price
                 else:
                     #player.group.price_change = player.group.price_change or (C.A_PARAM + player.group.s - player.group.f) * player.group.price
@@ -208,11 +207,11 @@ class Bid(Page):
                 
                 # Find03 Сохранять шаг изменения коэффициентов
                 if player.isHedgeFund:
-                    player.s_step = find_step_for_coeff(player.group.numSmallTraders) * player.discount_val
+                    player.s_step = find_step_for_coeff(player.group.numHedgeFunds) * player.discount_val
                     player.s += player.s_step
                     player.group.s = player.s
                 else:
-                    player.f_step = find_step_for_coeff(player.group.numHedgeFunds) * player.discount_val
+                    player.f_step = find_step_for_coeff(player.group.numSmallTraders) * player.discount_val
                     player.f += player.f_step
                     player.group.f = player.f
                 
@@ -225,7 +224,7 @@ class Bid(Page):
                 coeff = C.A_PARAM + player.s - player.f
                 player.insides = f"""<tr>
                     <td>{player.group.gameTime}</td>
-                    <td>a=0.2, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
+                    <td>a={C.A_PARAM}, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
                 </tr>""" + player.insides
         
         if player.group.price <= 0:
@@ -265,6 +264,12 @@ class ResultsWaitPage(WaitPage):
 
 class Results(Page):
     timeout_seconds = 30
+    
+    @staticmethod
+    def vars_for_template(player):
+        return dict(
+            a = C.A_PARAM
+        )
 
 
 page_sequence = [Info, WaitToStart, Bid, ResultsWaitPage, Results]
