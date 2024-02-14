@@ -1,0 +1,18 @@
+{{ block title }}
+    Информация перед раундом {{ player.group.round_number }}
+{{ endblock }}
+
+{{ block content }}
+
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+
+
+	<p>В этом раунде изменятся возможные границы позиции по акциям GameStop:</p>
+	<p>{{ old_params }} &rarr; {{ new_params }}</p>
+
+    {{ next_button }}
+{{ endblock }}
+
+

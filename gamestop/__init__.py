@@ -20,19 +20,20 @@ Your app description
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
     PLAYERS_PER_GROUP = None                    
-    NUM_ROUNDS = 3                              
-    INITIAL_TIME = 60                           # общее время игры
-    TIME_GAME_CHANGES = 30                      # время изменения игры (поведения цены)
-    PRICE_CHANGE_TIMEOUT = 3                    # частота изменения цены
-    INITIAL_POS = [(1000, 5000),(1000, -10000)] # начальные позиции игроков
-    POS_LIMITS = [-15000, 7000]                 # лимиты по акциям
-    DISCOUNT_COEFF = 2                          # насколько дисконтируется шаг
-    PRICE_ALPHA = 1.02                          # рост цены до изменения игры
-    PRICE_MU = 0                                # средняя флуктуация цены
-    PRICE_SIGMA = 0.03                          # дисперсия флуктуации цены
-    INSIDE_INITIAL_PRICE = 100.0                # начальная цена инсайда
-    A_PARAM = 0.2                               # параметр a для цены после изменения игры
-    INSIDES_BOUGHT_FOR_DISCOUNT = 3             # после покупки скольких инсайдов их цена меняется
+    NUM_ROUNDS = 6
+    ROUNDS_PARAMS_CHANGE = 3
+    INITIAL_TIME = 30                               # общее время игры
+    TIME_GAME_CHANGES = 20                          # время изменения игры (поведения цены)
+    PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
+    INITIAL_POS = [(1000, 5000),(1000, -10000)]     # начальные позиции игроков
+    POS_LIMITS = [[-15000, 7000], [-15000, 5000]]   # лимиты по акциям
+    DISCOUNT_COEFF = 2                              # насколько дисконтируется шаг
+    PRICE_ALPHA = 1.02                              # рост цены до изменения игры
+    PRICE_MU = 0                                    # средняя флуктуация цены
+    PRICE_SIGMA = 0.03                              # дисперсия флуктуации цены
+    INSIDE_INITIAL_PRICE = 100.0                    # начальная цена инсайда
+    A_PARAM = 0.2                                   # параметр a для цены после изменения игры
+    INSIDES_BOUGHT_FOR_DISCOUNT = 3                 # после покупки скольких инсайдов их цена меняется
 
 
 class Subsession(BaseSubsession):
@@ -105,6 +106,21 @@ def get_trend_msg(s, f, a=0.2):
 
 
 
+class Info(Page):
+    timeout_seconds = 30
+
+    @staticmethod
+    def is_displayed(player):
+        return player.round_number > 1 and (player.round_number - 1) % C.ROUNDS_PARAMS_CHANGE == 0
+        
+    @staticmethod
+    def vars_for_template(player):
+        return dict(
+            old_params = C.POS_LIMITS[0],
+            new_params = C.POS_LIMITS[1]
+        )
+    
+
 class Bid(Page):    
     print('START GAME')
     
@@ -128,7 +144,7 @@ class Bid(Page):
                 # p(t+1)=p(t)+p(t)*a+p(t)*z
                 # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
                 #new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
-                if player.group.gameTime < C.TIME_GAME_CHANGES:
+                if player.group.gameTime <= C.TIME_GAME_CHANGES:
                     player.group.price *= (C.PRICE_ALPHA + np.random.normal(C.PRICE_MU, C.PRICE_SIGMA))
                     player.group.price_change = (C.A_PARAM + player.group.s - player.group.f) * player.group.price
                 else:
@@ -160,7 +176,7 @@ class Bid(Page):
             # Find02 Проверять лимиты позиций у игрока
             # Find04 Исключить отрицательную позицию по деньгам
             
-            qnt = min(data['quantity'], C.POS_LIMITS[1] - player.pos, math.floor(player.cash / player.group.price))
+            qnt = min(data['quantity'], C.POS_LIMITS[(player.round_number - 1) // C.ROUNDS_PARAMS_CHANGE][1] - player.pos, math.floor(player.cash / player.group.price))
             
             if qnt:
                 player.cash -= player.group.price * qnt
@@ -171,7 +187,7 @@ class Bid(Page):
         
             # Find02 Проверять лимиты позиций у игрока
             
-            qnt = min(data['quantity'], player.pos - C.POS_LIMITS[0])
+            qnt = min(data['quantity'], player.pos - C.POS_LIMITS[(player.round_number - 1) // C.ROUNDS_PARAMS_CHANGE][0])
             
             if qnt:
                 player.pos -= qnt
@@ -251,4 +267,4 @@ class Results(Page):
     timeout_seconds = 30
 
 
-page_sequence = [WaitToStart, Bid, ResultsWaitPage, Results]
+page_sequence = [Info, WaitToStart, Bid, ResultsWaitPage, Results]
