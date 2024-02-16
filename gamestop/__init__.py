@@ -23,8 +23,8 @@ class C(BaseConstants):
     NUM_ROUNDS = 6
     ROUNDS_PARAMS_CHANGE = 3
     TEST_FLG = False                                # для тестирования
-    INITIAL_TIME = 60                               # общее время игры
-    TIME_GAME_CHANGES = 40                          # время изменения игры (поведения цены)
+    INITIAL_TIME = 90                               # общее время игры
+    TIME_GAME_CHANGES = 60                          # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
     INITIAL_POS = [(1000, 5000),(1000, -10000)]     # начальные позиции игроков
     POS_LIMITS = [[-15000, 7000], [-15000, 5000]]   # лимиты по акциям
