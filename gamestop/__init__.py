@@ -22,6 +22,7 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None                    
     NUM_ROUNDS = 6
     ROUNDS_PARAMS_CHANGE = 3
+    TEST_FLG = False                                # для тестирования
     INITIAL_TIME = 60                               # общее время игры
     TIME_GAME_CHANGES = 40                          # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
@@ -83,7 +84,10 @@ class WaitToStart(WaitPage):
     def after_all_players_arrive(group: Group):
         players = group.get_players()
         for player in players:
-            player.isAdmin = player.id_in_group == 1
+            if C.TEST_FLG:
+                player.isAdmin = player.id_in_group == 1
+            else:
+                player.isAdmin = (player.participant.label == 'admin')
             player.isHedgeFund = bool(player.id_in_group % 2) ^ bool(group.round_number % 2)
             player.cash, player.pos = C.INITIAL_POS[int(player.isHedgeFund)]
         group.numHedgeFunds = sum(1 if p.isHedgeFund and not p.isAdmin else 0 for p in players)
@@ -142,7 +146,7 @@ class Bid(Page):
                 # Find01 Обновление цены
                 # p(t+1)=p(t)+p(t)*a+p(t)*z = p(t)(1 + a + N(...))
                 # a - тренд, z - броуновская случайность (нормальное распределение с нулевым средним)
-                #new_price = player.group.price * (1.02 + np.random.normal(0, np.sqrt(150)))
+
                 if player.group.gameTime <= C.TIME_GAME_CHANGES:
                     player.group.price *= (1 + C.A_PARAM + np.random.normal(C.PRICE_MU, C.PRICE_SIGMA))
                     player.group.price_change = (C.A_PARAM + player.group.s - player.group.f) * player.group.price
