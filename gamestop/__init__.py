@@ -22,7 +22,6 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None                    
     NUM_ROUNDS = 6
     ROUNDS_PARAMS_CHANGE = 3
-    TEST_FLG = False                                # для тестирования
     INITIAL_TIME = 90                               # общее время игры
     TIME_GAME_CHANGES = 60                          # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
@@ -83,11 +82,12 @@ class WaitToStart(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
+        adminExists = any([(p.participant.label == 'admin') for p in players])
         for player in players:
-            if C.TEST_FLG:
-                player.isAdmin = player.id_in_group == 1
-            else:
+            if adminExists:
                 player.isAdmin = (player.participant.label == 'admin')
+            else:
+                player.isAdmin = player.id_in_group == 1
             player.isHedgeFund = bool(player.id_in_group % 2) ^ bool(group.round_number % 2)
             player.cash, player.pos = C.INITIAL_POS[int(player.isHedgeFund)]
         group.numHedgeFunds = sum(1 if p.isHedgeFund and not p.isAdmin else 0 for p in players)
@@ -126,6 +126,15 @@ class Info(Page):
 
 class Bid(Page):    
     print('START GAME')
+    
+    @staticmethod
+    def vars_for_template(player):
+        return dict(
+            s_init_cash = C.INITIAL_POS[0][0],
+            s_init_pos = C.INITIAL_POS[0][1],
+            f_init_cash = C.INITIAL_POS[1][0],
+            f_init_pos = C.INITIAL_POS[1][1]
+        )
     
     @staticmethod
     def live_method(player, data):

@@ -325,12 +325,12 @@
 	<td>Малый инвестор</td>
 	<td><math>
   <mrow>
-    <mn>1000</mn>
+    <mn>{{ s_init_cash }}</mn>
     <mi>$</mi>
   </mrow>
 </math></td>
 	<td><math>
-  <mn>5000</mn>
+  <mn>{{ s_init_pos }}</mn>
 </math></td>
 	<td>f увеличивается, s не меняется</td>
 	</tr>
@@ -338,16 +338,13 @@
 	<td>Хедж–фонд</td>
 	<td><math>
   <mrow>
-    <mn>1000</mn>
+    <mn>{{ f_init_cash }}</mn>
     <mi>$</mi>
   </mrow>
 </math></td>
 	<td><math>
   <mrow>
-    <mo>−</mo>
-  </mrow>
-  <mrow>
-    <mn>10000</mn>
+    <mn>{{ f_init_pos }}</mn>
   </mrow>
 </math></td>
 	<td>s увеличивается, f не меняется</td>
