@@ -10,7 +10,25 @@
 
 
 	<p>Последняя цена акции: {{ player.group.price }}</p>
-	<p>Параметры: \( a={{ a }} \), \( s={{ player.group.s }} \), \(f={{ player.group.f }} \)</p>
+	<p>Параметры: <math>
+  <mrow>
+    <mi>a</mi>
+    <mo>=</mo>
+    <mn>{{ a }}</mn>
+  </mrow>
+</math>, <math>
+  <mrow>
+    <mi>s</mi>
+    <mo>=</mo>
+    <mn>{{ player.group.s }}</mn>
+  </mrow>
+</math>, <math>
+  <mrow>
+    <mi>f</mi>
+    <mo>=</mo>
+    <mn>{{ player.group.f }}</mn>
+  </mrow>
+</math></p>
 	<p>Ваш выигрыш: <b>{{ player.payoff }}</b></p>
 
     {{ next_button }}
