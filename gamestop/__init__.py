@@ -283,7 +283,7 @@ class ResultsWaitPage(WaitPage):
         group.s = round(group.s, 2)
         group.f = round(group.f, 2)
         for player in group.get_players():
-            player.payoff = max(0, player.cash + player.pos * group.price)
+            player.payoff = player.cash + player.pos * group.price
 
 
 
