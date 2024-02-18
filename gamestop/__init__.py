@@ -16,6 +16,8 @@ Your app description
 # Find04 Исключить отрицательную позицию по деньгам
 # Find05 Отключить кнопку покупки инсайда после изменения игры
 # Find06 Добавить таймер для покупки инсайда
+# Find07 автоматический выбор админа при необходимости
+# Find08 не выводить параметр а при а=0
 
 class C(BaseConstants):
     NAME_IN_URL = 'gamestop'
@@ -41,7 +43,7 @@ class Subsession(BaseSubsession):
 
 class Group(BaseGroup):
     # ПАРАМЕТРЫ ГРУППЫ
-    price = models.FloatField(initial=50.0)                
+    price = models.FloatField(initial=50)                
     priceLastUpd = models.IntegerField(initial=0)           
     s = models.FloatField(initial=0)
     f = models.FloatField(initial=0)
@@ -82,6 +84,8 @@ class WaitToStart(WaitPage):
     @staticmethod
     def after_all_players_arrive(group: Group):
         players = group.get_players()
+        
+        # Find07 автоматический выбор админа при необходимости
         adminExists = any([(p.participant.label == 'admin') for p in players])
         for player in players:
             if adminExists:
@@ -235,10 +239,18 @@ class Bid(Page):
                     player.k += 1
                 
                 coeff = C.A_PARAM + player.s - player.f
-                player.insides = f"""<tr>
-                    <td>{player.group.gameTime}</td>
-                    <td>a={C.A_PARAM}, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
-                </tr>""" + player.insides
+                
+                # Find08 не выводить параметр а при а=0
+                if C.A_PARAM == 0:
+                    player.insides = f"""<tr>
+                        <td>{player.group.gameTime}</td>
+                        <td>s={player.s:.2f}, f={player.f:.2f}, {get_trend_msg(player.s, player.f)}</td>
+                    </tr>""" + player.insides
+                else:
+                    player.insides = f"""<tr>
+                        <td>{player.group.gameTime}</td>
+                        <td>a={C.A_PARAM}, s={player.s:.2f}, f={player.f:.2f}, a+s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
+                    </tr>""" + player.insides
         
         if player.group.price <= 0:
             player.group.timeLeft = 0
@@ -280,9 +292,9 @@ class Results(Page):
     
     @staticmethod
     def vars_for_template(player):
-        return dict(
-            a = C.A_PARAM
-        )
+        if C.A_PARAM == 0:
+            return {'a': ''}
+        return {'a', f"<math><mrow><mi>a</mi><mo>=</mo><mn>{C.A_PARAM}</mn></mrow></math>"}
 
 
 page_sequence = [Info, WaitToStart, Bid, ResultsWaitPage, Results]

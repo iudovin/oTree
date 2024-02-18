@@ -8,8 +8,8 @@ SESSION_CONFIGS = [
     ),
     dict(
         name='gamestop',
-        app_sequence=['survey_short', 'instruction', 'gamestop'],
-        #app_sequence=['gamestop'],
+        #app_sequence=['survey_short', 'instruction', 'gamestop'],
+        app_sequence=['gamestop'],
         num_demo_participants=3,
     ),
 ]
