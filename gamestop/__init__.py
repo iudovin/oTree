@@ -25,13 +25,13 @@ class C(BaseConstants):
     INITIAL_TIME = 90                               # общее время игры
     TIME_GAME_CHANGES = 60                          # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
-    INITIAL_POS = [(1000, 5000),(1000, -10000)]     # начальные позиции игроков
-    POS_LIMITS = [[-15000, 7000], [-15000, 5000]]   # лимиты по акциям
+    INITIAL_POS = [(1000, 20),(7000, -100)]         # начальные позиции игроков
+    POS_LIMITS = [[-200, 100], [-200, 200]]         # лимиты по акциям
     DISCOUNT_COEFF = 2                              # насколько дисконтируется шаг
     PRICE_MU = 0                                    # средняя флуктуация цены
-    PRICE_SIGMA = 0.15                              # дисперсия флуктуации цены
+    PRICE_SIGMA = 0.07                              # дисперсия флуктуации цены
     INSIDE_INITIAL_PRICE = 100.0                    # начальная цена инсайда
-    A_PARAM = 0.02                                  # тренд для цены акции
+    A_PARAM = 0                                     # тренд для цены акции
     INSIDES_BOUGHT_FOR_DISCOUNT = 3                 # после покупки скольких инсайдов их цена меняется
 
 
@@ -41,7 +41,7 @@ class Subsession(BaseSubsession):
 
 class Group(BaseGroup):
     # ПАРАМЕТРЫ ГРУППЫ
-    price = models.FloatField(initial=100.0)                
+    price = models.FloatField(initial=50.0)                
     priceLastUpd = models.IntegerField(initial=0)           
     s = models.FloatField(initial=0)
     f = models.FloatField(initial=0)
