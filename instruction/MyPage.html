@@ -20,6 +20,11 @@ table tr td:last-child {
 	font-size: 110%;
 }
 
+figcaption {
+	font-size: 80%;
+	color: #777;
+}
+
 </style>
 
 <!--script type="module" src="https://md-block.verou.me/md-block.js"></script>
@@ -37,18 +42,13 @@ table tr td:last-child {
 <li> Малые инвесторы
 </ol>
 
-<p>Вам будут предоставлены акции компании GameStop и деньги <math>
-  <mrow>
-    <mn>1000</mn>
-    <mi>$</mi>
-  </mrow>
-</math>. В игре нет процентной ставки и присутствует запрет на короткие позиции по деньгам.</p>
+<p>Вам будут предоставлены акции компании GameStop и деньги. В игре нет процентной ставки и присутствует запрет на короткие позиции по деньгам.</p>
 
 <table class="table">
 <tr>
 <th></th>
 <th>Cash</th>
-<th>GME</th>
+<th>GameStop</th>
 </tr>
 <tr>
 <td>Малый инвестор</td>
@@ -59,14 +59,14 @@ table tr td:last-child {
   </mrow>
 </math></td>
 <td><math>
-  <mn>5000</mn>
+  <mn>20</mn>
 </math></td>
 </tr>
 <tr>
 <td>Хедж–фонд</td>
 <td><math>
   <mrow>
-    <mn>1000</mn>
+    <mn>7000</mn>
     <mi>$</mi>
   </mrow>
 </math></td>
@@ -75,7 +75,7 @@ table tr td:last-child {
     <mo>−</mo>
   </mrow>
   <mrow>
-    <mn>10000</mn>
+    <mn>100</mn>
   </mrow>
 </math></td>
 </tr>
@@ -90,25 +90,25 @@ table tr td:last-child {
     <mo form="postfix" stretchy="false">)</mo>
   </mrow>
 </math>
-. На покупку активов введены ограничения: на счету у игроков могут находиться активы GME по количеству попадающие в промежуток 
+. На покупку активов введены ограничения: на счету у игроков могут находиться активы GameStop по количеству попадающие в промежуток 
 <math>
   <mrow>
     <mo form="prefix" stretchy="false">[</mo>
     <mo form="prefix" stretchy="false">−</mo>
-    <mn>15000</mn>
+    <mn>200</mn>
     <mo separator="true">;</mo>
-    <mn>5000</mn>
+    <mn>100</mn>
     <mo form="postfix" stretchy="false">]</mo>
   </mrow>
 </math>
 , т.е. игроки не могут владеть больше <math>
-  <mn>5000</mn>
+  <mn>100</mn>
 </math> акций или меньше <math>
   <mrow>
     <mo>−</mo>
   </mrow>
   <mrow>
-    <mn>15000</mn>
+    <mn>200</mn>
   </mrow>
 </math> акций.</p>
 
@@ -141,8 +141,8 @@ table tr td:last-child {
               <mo>⋅</mo>
               <mo form="prefix" stretchy="false">[</mo>
               <mn>1</mn>
-              <mo>+</mo>
-              <mi>a</mi>
+              <!--mo>+</mo>
+              <mi>a</mi-->
               <mo>+</mo>
               <mi class="mathcal">𝒩</mi>
               <mo form="prefix" stretchy="false">(</mo>
@@ -201,8 +201,8 @@ table tr td:last-child {
               <mo form="postfix" stretchy="false">)</mo>
               <mo>⋅</mo>
               <mo form="prefix" stretchy="false">(</mo>
-              <mi>a</mi>
-              <mo>+</mo>
+              <!--mi>a</mi>
+              <mo>+</mo-->
               <mi>s</mi>
               <mo>−</mo>
               <mi>f</mi>
@@ -228,10 +228,10 @@ table tr td:last-child {
 </math>
 
 где <math>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo separator="true">,</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
     <mo separator="true">,</mo>
@@ -322,10 +322,10 @@ table tr td:last-child {
     <mi>f</mi>
     <mo>&lt;</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
   </mrow>
@@ -344,10 +344,10 @@ table tr td:last-child {
     <mi>f</mi>
     <mo>&gt;</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
   </mrow>
@@ -356,10 +356,10 @@ table tr td:last-child {
     <mi>f</mi>
     <mo>=</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
   </mrow>
@@ -371,10 +371,10 @@ table tr td:last-child {
 <ol>
 <li>Игрок из группы «фонды» покупает информацию;
 <li>На экране у него выводится информация про коэффициенты <math>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo separator="true">,</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
     <mo separator="true">,</mo>
@@ -390,11 +390,11 @@ table tr td:last-child {
     <mo form="postfix" stretchy="false">)</mo>
     <mo>=</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mi>t</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
     <mi>t</mi>
@@ -416,10 +416,10 @@ table tr td:last-child {
     </msup>
     <mo separator="true">,</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo separator="true">,</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
     <mo separator="true">,</mo>
@@ -484,28 +484,30 @@ table tr td:last-child {
 </math>
 </p>
 
-<div align="center">
-<img src="{{ static 'images/image4.png' }}" />
-</div>
+<figure align="center">
+  <img src="{{ static 'images/eq.png' }}" />
+  <figcaption>Пример, когда рынок ни растет, ни падает</figcaption>
+</figure>
 
 <p><b>2)</b> Построим график изменения цены в ситуации, когда игроки из команды малых инвесторов интересовались больше &rarr; покупали больше приватной информации, чем игроки из хедж-фондов &rarr; <math>
   <mrow>
     <mi>f</mi>
     <mo>&gt;</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
   </mrow>
 </math>
 </p>
 
-<div align="center">
-<img src="{{ static 'images/image15.png' }}" />
-</div>
+<figure align="center">
+  <img src="{{ static 'images/down.png' }}" />
+  <figcaption>Пример падения рынка</figcaption>
+</figure>
 
 <p><b>Замечание.</b> Для этой ситуации может произойти <math>
   <mrow>
@@ -536,37 +538,20 @@ table tr td:last-child {
     <mi>f</mi>
     <mo>&lt;</mo>
   </mrow>
-  <mrow>
+  <!--mrow>
     <mi>a</mi>
     <mo>+</mo>
-  </mrow>
+  </mrow-->
   <mrow>
     <mi>s</mi>
   </mrow>
 </math>
 </p>
 
-<div align="center">
-<img src="{{ static 'images/image23.png' }}" />
-</div>
-
-<p><b>4)</b> Построим график изменения цены в ситуации, когда интерес игроков привел к ситуации: <math>
-  <mrow>
-    <mi>f</mi>
-    <mo>=</mo>
-  </mrow>
-  <mrow>
-    <mi>a</mi>
-    <mo>+</mo>
-  </mrow>
-  <mrow>
-    <mi>s</mi>
-  </mrow>
-</math></p>
-
-<div align="center">
-<img src="{{ static 'images/image14.png' }}" />
-</div>
+<figure align="center">
+  <img src="{{ static 'images/up.png' }}" />
+  <figcaption>Пример роста рынка</figcaption>
+</figure>
 
 <p><b>Выигрыш:</b> полученные деньги в конце игры, после суммирования остатка денежного счета и результата закрытия позиции, т.е. денежный остаток плюс оценка акций по финальным котировкам.</p>
 
