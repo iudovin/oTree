@@ -24,8 +24,8 @@ class C(BaseConstants):
     PLAYERS_PER_GROUP = None                    
     NUM_ROUNDS = 6
     ROUNDS_PARAMS_CHANGE = 3
-    INITIAL_TIME = 90                               # общее время игры
-    TIME_GAME_CHANGES = 60                          # время изменения игры (поведения цены)
+    INITIAL_TIME = 240                              # общее время игры
+    TIME_GAME_CHANGES = 120                         # время изменения игры (поведения цены)
     PRICE_CHANGE_TIMEOUT = 3                        # частота изменения цены
     INITIAL_POS = [(1000, 20),(7000, -100)]         # начальные позиции игроков
     POS_LIMITS = [[-200, 100], [-200, 200]]         # лимиты по акциям
@@ -244,7 +244,7 @@ class Bid(Page):
                 if C.A_PARAM == 0:
                     player.insides = f"""<tr>
                         <td>{player.group.gameTime}</td>
-                        <td>s={player.s:.2f}, f={player.f:.2f}, {get_trend_msg(player.s, player.f)}</td>
+                        <td>s={player.s:.2f}, f={player.f:.2f}, s-f={coeff:.2f}, {get_trend_msg(player.s, player.f)}</td>
                     </tr>""" + player.insides
                 else:
                     player.insides = f"""<tr>
